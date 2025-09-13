@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF to Image Converter - ToolHub</title>
+  <meta name="description" content="Free online tool to convert PDF pages to high-quality JPG or PNG images.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    :root { 
+      --primary: #4361ee;
+      --primary-light: #6a85f1;
+      --secondary: #3a0ca3;
+      --accent: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --success: #198754;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --gray: #6c757d;
+      --light-gray: #e9ecef;
+      --border-radius: 12px;
+      --transition: all 0.3s ease; 
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #f9fafb;
+      color: var(--dark);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.1);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: white;
+    }
+    .logo i {
+      color: var(--accent);
+    }
+    main {
+      padding: 40px 0;
+      flex-grow: 1;
+    }
+    .tool-container {
+      background: white;
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+    .tool-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .tool-header h1 {
+      color: var(--secondary);
+      margin-bottom: 10px;
+      font-size: 2.2rem;
+    }
+    .tool-header p {
+      color: var(--gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .upload-area {
+      border: 3px dashed var(--light-gray);
+      border-radius: 10px;
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: var(--primary);
+      background: rgba(67,97,238,.05);
+    }
+    .upload-area i {
+      font-size: 3rem;
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+    #pdf-input {
+      display: none;
+    }
+    .file-name {
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 15px;
+    }
+    .file-size {
+      color: var(--gray);
+      font-size: .85rem;
+      margin-top: 5px;
+    }
+    .options-panel {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--light);
+      border-radius: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 200px;
+      flex: 1;
+    }
+    .option-group label {
+      font-weight: 500;
+      font-size: .9rem;
+      color: var(--gray);
+    }
+    .option-group select, .option-group input {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--light-gray);
+      font-size: 1rem;
+      background: white;
+    }
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: var(--dark); }
+    .btn:disabled {
+      background: var(--light-gray);
+      color: var(--gray);
+      cursor: not-allowed;
+    }
+    .progress-container {
+      width: 100%;
+      background: var(--light-gray);
+      border-radius: 50px;
+      margin: 20px 0;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      height: 10px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 50px;
+      width: 0%;
+      transition: width .3s;
+    }
+    #status-message {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: 500;
+      display: none;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .status-success { background: rgba(25,135,84,.1); color: var(--success); }
+    .status-error { background: rgba(220,53,69,.1); color: var(--danger); }
+    .status-info { background: rgba(13,110,253,.1); color: var(--primary); }
+    .output-area {
+      margin-top: 30px;
+      display: none;
+    }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .image-item {
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+      background: white;
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+    .image-item:hover {
+      transform: translateY(-5px);
+    }
+    .image-item img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+    }
+    .image-item-footer { 
+      padding: 10px; 
+      background-color: #f8f9fa; 
+      text-align: center; 
+      margin-top: auto; 
+    }
+    .image-item-footer p { 
+      margin: 0 0 10px 0; 
+      font-weight: 500; 
+      font-size: 0.9rem; 
+    }
+    .image-item-footer .btn { 
+      padding: 5px 15px; 
+      font-size: 0.8rem; 
+      border-radius: 5px; 
+      width: 100%; 
+      justify-content: center; 
+    }
+
+    /* === How to Guide Section Styles START === */
+    .how-to-guide {
+      background-color: var(--light);
+      padding: 60px 0;
+      margin-top: 40px;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .section-header h2 {
+      font-size: 2rem;
+      color: var(--secondary);
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+    }
+    .step-card {
+      background: white;
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+      text-align: center;
+      border: 1px solid var(--light-gray); /* Added a light border */
+    }
+    .step-icon {
+      font-size: 2.5rem;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    .step-card h3 {
+      font-size: 1.2rem;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+    .step-card p {
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+    /* === How to Guide Section Styles END === */
+
+    footer {
+      background: var(--dark);
+      color: white;
+      padding: 40px 0 20px;
+      margin-top: auto;
+    }
+    .copyright {
+      text-align: center;
+      color: #aaa;
+      font-size: .9rem;
+    }
+    @media(max-width: 768px) {
+      .tool-header h1 { font-size: 1.8rem; }
+      .options-panel { flex-direction: column; }
+      .actions .btn { width: 100%; justify-content: center; }
+      .section-header h2 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <a href="#" class="logo"><i class="fas fa-file-image"></i> ToolHub</a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="tool-container">
+      <div class="tool-header">
+        <h1>PDF to Image Converter</h1>
+        <p>Extract PDF pages as high-quality JPG/PNG images. 100% Free & Secure.</p>
+      </div>
+
+      <label for="pdf-input" class="upload-area" id="upload-area">
+        <i class="fas fa-file-pdf"></i>
+        <p>Click to select a PDF file</p>
+        <span>or Drag & Drop here</span>
+        <p class="file-name" id="file-name"></p>
+        <p class="file-size" id="file-size"></p>
+      </label>
+      <input type="file" id="pdf-input" accept="application/pdf">
+
+      <div class="options-panel">
+        <div class="option-group">
+          <label for="image-format">Image Format</label>
+          <select id="image-format">
+            <option value="jpeg" selected>JPG (Recommended)</option>
+            <option value="png">PNG (Larger Files)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label for="image-quality">Resolution</label>
+          <select id="image-quality">
+            <option value="1.33">Web (~96 DPI)</option>
+            <option value="2.08" selected>Good (~150 DPI)</option>
+            <option value="4.16">Print (~300 DPI)</option>
+            <option value="5.55">Ultra (~400 DPI)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label for="page-range">Pages (Optional)</label>
+          <input type="text" id="page-range" placeholder="e.g. 1-5, 8, 10">
+        </div>
+      </div>
+
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="convert-btn" disabled><i class="fas fa-cogs"></i> Convert</button>
+        <button class="btn btn-warning" id="reset-btn" style="display:none;"><i class="fas fa-redo"></i> New PDF</button>
+      </div>
+
+      <p id="status-message"></p>
+
+      <div class="output-area" id="output-area">
+        <div class="output-header">
+          <h2>Converted Images</h2>
+          <div class="actions">
+            <button class="btn btn-success" id="zip-btn"><i class="fas fa-file-archive"></i> ZIP</button>
+            <a href="#" class="btn btn-success" id="download-zip-link" style="display:none;"><i class="fas fa-download"></i> Download</a>
+          </div>
+        </div>
+        <div class="image-grid" id="image-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="how-to-guide">
+      <div class="container">
+          <div class="section-header">
+              <h2>How to Convert PDF to Image in 4 Easy Steps</h2>
+          </div>
+          <div class="steps-grid">
+              <div class="step-card">
+                  <div class="step-icon"><i class="fas fa-file-upload"></i></div>
+                  <h3>1. Select Your PDF</h3>
+                  <p>Click on the upload area to choose a PDF file from your computer, or simply drag and drop your file into the dashed box.</p>
+              </div>
+              <div class="step-card">
+                  <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                  <h3>2. Choose Your Options</h3>
+                  <p>Select your desired image format (JPG or PNG) and resolution. You can also specify a page range (e.g., "1-3, 5") to convert only specific pages.</p>
+              </div>
+              <div class="step-card">
+                  <div class="step-icon"><i class="fas fa-play-circle"></i></div>
+                  <h3>3. Start Conversion</h3>
+                  <p>Once your file is uploaded and options are set, click the "Convert" button to begin the process. Wait for the progress bar to reach 100%.</p>
+              </div>
+              <div class="step-card">
+                  <div class="step-icon"><i class="fas fa-download"></i></div>
+                  <h3>4. Download Images</h3>
+                  <p>After conversion, your images will appear below. Download them individually or click the "ZIP" button to get all images in a single archive file.</p>
+              </div>
+          </div>
+      </div>
+  </section>
+  </main>
+
+<footer>
+  <div class="container">
+    <p class="copyright">Â© Copyright 2025 ToolHub. All rights reserved</p>
+  </div>
+</footer>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+document.addEventListener("DOMContentLoaded", () => {
+  const uploadArea = document.getElementById("upload-area");
+  const pdfInput = document.getElementById("pdf-input");
+  const fileNameDisplay = document.getElementById("file-name");
+  const fileSizeDisplay = document.getElementById("file-size");
+  const convertBtn = document.getElementById("convert-btn");
+  const resetBtn = document.getElementById("reset-btn");
+  const statusMessage = document.getElementById("status-message");
+  const outputArea = document.getElementById("output-area");
+  const imageGrid = document.getElementById("image-grid");
+  const zipBtn = document.getElementById("zip-btn");
+  const downloadZipLink = document.getElementById("download-zip-link");
+  const progressContainer = document.getElementById("progress-container");
+  const progressBar = document.getElementById("progress-bar");
+
+  let selectedFile = null;
+
+  function resetUI() {
+    selectedFile = null;
+    pdfInput.value = null;
+    fileNameDisplay.textContent = "";
+    fileSizeDisplay.textContent = "";
+    convertBtn.disabled = true;
+    resetBtn.style.display = "none";
+    statusMessage.style.display = "none";
+    outputArea.style.display = "none";
+    progressContainer.style.display = "none";
+    progressBar.style.width = "0%";
+    imageGrid.innerHTML = "";
+    zipBtn.style.display = "inline-flex";
+    downloadZipLink.style.display = "none";
+    uploadArea.style.pointerEvents = "auto";
+  }
+
+  function updateProgress(p) { progressBar.style.width = p + "%"; }
+  function formatFileSize(b){const k=1024,s=['B','KB','MB','GB'],i=Math.floor(Math.log(b)/Math.log(k));return (b/Math.pow(k,i)).toFixed(2)+' '+s[i];}
+
+  uploadArea.addEventListener("dragover", e => {e.preventDefault();uploadArea.classList.add("dragover");});
+  uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
+  uploadArea.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadArea.classList.remove("dragover");
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  pdfInput.addEventListener("change", e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+  function handleFile(file) {
+    if (file && file.type === "application/pdf") {
+      resetUI();
+      selectedFile = file;
+      fileNameDisplay.textContent = file.name;
+      fileSizeDisplay.textContent = formatFileSize(file.size);
+      convertBtn.disabled = false;
+      resetBtn.style.display = "inline-flex";
+      uploadArea.style.pointerEvents = "none";
+    } else { alert("Please select a valid PDF file."); }
+  }
+
+  function parsePageRange(rangeStr, totalPages) {
+    if (!rangeStr.trim()) {
+      return [...Array(totalPages).keys()].map(i => i + 1);
+    }
+    const pages = new Set();
+    const parts = rangeStr.split(',');
+    for (const part of parts) {
+      if (part.includes('-')) {
+        let [start, end] = part.split('-').map(Number);
+        if (isNaN(start) || isNaN(end) || start < 1 || end > totalPages || start > end) {
+          throw new Error(`Invalid page range: "${part}"`);
+        }
+        for (let i = start; i <= end; i++) pages.add(i);
+      } else {
+        let pageNum = Number(part);
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+          throw new Error(`Invalid page number: "${part}"`);
+        }
+        pages.add(pageNum);
+      }
+    }
+    return [...pages].sort((a, b) => a - b);
+  }
+
+  convertBtn.addEventListener("click", async () => {
+    if (!selectedFile) return;
+    
+    convertBtn.disabled = true; 
+    resetBtn.disabled = true;
+    
+    statusMessage.style.display="block"; 
+    statusMessage.className="status-info"; 
+    statusMessage.textContent="Starting process...";
+    progressContainer.style.display="block"; 
+    updateProgress(0); 
+    imageGrid.innerHTML="";
+
+    const format = document.getElementById("image-format").value;
+    const scale = parseFloat(document.getElementById("image-quality").value);
+    const rangeStr = document.getElementById("page-range").value;
+
+    try {
+      const fileBuffer = await selectedFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
+      const pagesToRender = parsePageRange(rangeStr, pdf.numPages);
+      
+      if (pagesToRender.length === 0) {
+        throw new Error("No valid pages selected to convert.");
+      }
+
+      for (let i = 0; i < pagesToRender.length; i++) {
+        const pageNumber = pagesToRender[i];
+        statusMessage.textContent = `Converting page ${pageNumber} of ${pdf.numPages}...`;
+
+        const page = await pdf.getPage(pageNumber);
+        const viewport = page.getViewport({ scale });
+        
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+        const imageDataUrl = canvas.toDataURL(`image/${format}`, format === "jpeg" ? 0.95 : 1.0);
+        const fileExtension = format === 'jpeg' ? 'jpg' : 'png';
+        const imageFileName = `page_${pageNumber}.${fileExtension}`;
+
+        const item = document.createElement("div");
+        item.className = "image-item";
+
+        const img = document.createElement("img");
+        img.src = imageDataUrl;
+        img.dataset.filename = imageFileName;
+
+        const footer = document.createElement("div");
+        footer.className = "image-item-footer";
+
+        const pageText = document.createElement("p");
+        pageText.textContent = `Page ${pageNumber}`;
+
+        const downloadLink = document.createElement("a");
+        downloadLink.href = imageDataUrl;
+        downloadLink.download = imageFileName;
+        downloadLink.className = "btn btn-primary";
+        downloadLink.innerHTML = `<i class="fas fa-download"></i> Download`;
+
+        footer.appendChild(pageText);
+        footer.appendChild(downloadLink);
+        item.appendChild(img);
+        item.appendChild(footer);
+        
+        imageGrid.appendChild(item);
+        
+        updateProgress(((i + 1) / pagesToRender.length) * 100);
+      }
+      
+      statusMessage.className = "status-success";
+      statusMessage.textContent = `Successfully converted ${pagesToRender.length} pages!`;
+      outputArea.style.display = "block";
+
+    } catch (e) {
+      console.error(e);
+      statusMessage.className = "status-error";
+      statusMessage.textContent = `Error: ${e.message || "Could not process PDF. It may be corrupt or password-protected."}`;
+    } finally {
+      resetBtn.disabled = false;
+    }
+  });
+
+  resetBtn.addEventListener("click", resetUI);
+
+  zipBtn.addEventListener("click", async () => {
+    try {
+      statusMessage.style.display="block";
+      statusMessage.className="status-info";
+      statusMessage.textContent="Creating ZIP file...";
+      
+      const zip = new JSZip();
+      imageGrid.querySelectorAll("img").forEach(img => {
+        const base64Data = img.src.split(",")[1];
+        zip.file(img.dataset.filename, base64Data, { base64: true });
+      });
+
+      const content = await zip.generateAsync({type:"blob"});
+      const url = URL.createObjectURL(content);
+
+      downloadZipLink.href = url;
+      downloadZipLink.download = selectedFile.name.replace(/\.pdf$/i, "") + "_images.zip";
+      
+      zipBtn.style.display = "none";
+      downloadZipLink.style.display = "inline-flex";
+      
+      statusMessage.className = "status-success";
+      statusMessage.textContent = "ZIP file is ready for download!";
+
+    } catch(e) {
+      console.error(e);
+      statusMessage.className="status-error";
+      statusMessage.textContent="Failed to create ZIP file.";
+    }
+  });
+});
+</script>
+</body>
+</html>
