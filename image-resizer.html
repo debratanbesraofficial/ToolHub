@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer - ToolHub</title>
+    <meta name="description" content="Free online tool to resize images quickly and easily.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #6a85f1;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9fafb;
+            color: var(--dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .logo i {
+            color: var(--accent);
+        }
+        
+        main {
+            padding: 40px 0;
+            flex-grow: 1;
+        }
+        
+        .tool-container {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .tool-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tool-header h1 {
+            color: var(--secondary);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .tool-header p {
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--light-gray);
+            border-radius: 10px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .upload-area .upload-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--dark);
+            margin: 0;
+        }
+        .upload-area .upload-hint {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        #image-input {
+            display: none;
+        }
+
+        .preview-area {
+            margin-top: 30px;
+        }
+        .preview-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .preview-item {
+            display: flex;
+            flex-direction: column; /* Changed to column for better preview of image */
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--light-gray);
+            gap: 10px;
+        }
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        .preview-item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            justify-content: space-between; /* To push remove button to the right */
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .file-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        .file-name {
+            font-weight: 500;
+        }
+        .image-thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 5px;
+            object-fit: contain;
+            border: 1px solid var(--light-gray);
+            padding: 3px;
+        }
+        .remove-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .remove-btn:hover {
+            color: var(--dark);
+        }
+
+        .options-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light);
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .option-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        .option-group select, .option-group input[type="text"], .option-group input[type="number"] {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            font-size: 1rem;
+            min-width: 100px;
+        }
+        .option-group.inline {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+        }
+        .option-group.inline input {
+            flex-grow: 1;
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-light); }
+        .btn-secondary { background-color: var(--warning); color: var(--dark); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn:disabled { background-color: var(--gray); cursor: not-allowed; opacity: 0.7; }
+        
+        .progress-container {
+            width: 100%;
+            background: var(--light-gray);
+            border-radius: 50px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 50px;
+            width: 0%;
+            transition: width .3s;
+        }
+
+        #status-message {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 500;
+            display: none;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .status-success { background: rgba(25,135,84,.1); color: var(--success); }
+        .status-error { background: rgba(220,53,69,.1); color: var(--danger); }
+        .status-info { background: rgba(13,110,253,.1); color: var(--primary); }
+
+        .output-area {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid var(--success);
+            background: rgba(25,135,84,.05);
+            border-radius: var(--border-radius);
+            display: none;
+        }
+        
+        .how-to-guide {
+            background-color: var(--light);
+            padding: 60px 0;
+            margin-top: 40px;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .section-header h2 {
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+        }
+        .step-card {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+            text-align: center;
+            border: 1px solid var(--light-gray);
+        }
+        .step-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        .step-card h3 {
+            font-size: 1.2rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        .step-card p {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: auto;
+        }
+        .copyright { text-align: center; color: #aaa; font-size: 0.9rem; }
+
+        @media (max-width: 576px) {
+            main { padding: 20px 0; }
+            .tool-container { padding: 15px; }
+            .tool-header h1 { font-size: 1.8rem; }
+            .upload-area { padding: 30px 15px; }
+            .options-panel { flex-direction: column; align-items: stretch; padding: 15px; }
+            .option-group select, .option-group input { width: 100%; }
+            .actions { flex-direction: column; align-items: stretch; }
+            .btn { justify-content: center; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="#" class="logo">
+                <i class="fas fa-tools"></i>
+                <span>ToolHub</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>Image Resizer</h1>
+                    <p>Resize images by dimensions or percentage, fast and free.</p>
+                </div>
+                
+                <label for="image-input" class="upload-area" id="upload-area">
+                    <i class="fas fa-image"></i>
+                    <p class="upload-text">Click to select images</p>
+                    <span class="upload-hint">or Drag & Drop here (JPG, PNG, WEBP)</span>
+                </label>
+                <input type="file" id="image-input" multiple accept="image/jpeg, image/png, image/webp">
+                
+                <div class="preview-area" id="preview-area" style="display: none;">
+                    <ul class="preview-list" id="preview-list"></ul>
+                </div>
+
+                <div class="options-panel" id="options-panel" style="display: none;">
+                    <div class="option-group">
+                        <label for="resize-type">Resize By:</label>
+                        <select id="resize-type">
+                            <option value="percentage">Percentage</option>
+                            <option value="dimensions">Dimensions (px)</option>
+                        </select>
+                    </div>
+                    <div class="option-group" id="percentage-options">
+                        <label for="resize-percentage">Percentage:</label>
+                        <input type="number" id="resize-percentage" min="10" max="200" value="50">
+                    </div>
+                    <div class="option-group inline" id="dimension-options" style="display: none;">
+                        <label for="resize-width">Width:</label>
+                        <input type="number" id="resize-width" placeholder="Auto" min="1">
+                        <label for="resize-height">Height:</label>
+                        <input type="number" id="resize-height" placeholder="Auto" min="1">
+                    </div>
+                    <div class="option-group">
+                        <label for="maintain-aspect-ratio">Aspect Ratio:</label>
+                        <input type="checkbox" id="maintain-aspect-ratio" checked> Keep Aspect Ratio
+                    </div>
+                    <div class="option-group">
+                        <label for="output-format">Output Format:</label>
+                        <select id="output-format">
+                            <option value="original">Original</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="png">PNG</option>
+                            <option value="webp">WEBP</option>
+                        </select>
+                    </div>
+                    <div class="option-group" id="jpeg-quality-option" style="display: none;">
+                        <label for="jpeg-quality">JPEG Quality: <span id="jpeg-quality-value">90</span>%</label>
+                        <input type="range" id="jpeg-quality" min="10" max="100" value="90">
+                    </div>
+                </div>
+
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="resize-btn" disabled>
+                        <i class="fas fa-expand-alt"></i> Resize Images
+                    </button>
+                    <button class="btn btn-secondary" id="clear-btn" style="display: none;">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+
+                <p id="status-message"></p>
+                
+                <div class="output-area" id="output-area">
+                     <a href="#" class="btn btn-success" id="download-btn" download="ToolHub_Resized_Images.zip">
+                        <i class="fas fa-download"></i> Download Resized Images
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <section class="how-to-guide">
+            <div class="container">
+                <div class="section-header">
+                    <h2>How to Resize Images in 4 Easy Steps</h2>
+                </div>
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-icon"><i class="fas fa-file-upload"></i></div>
+                        <h3>1. Upload Your Images</h3>
+                        <p>Click the upload area to choose images from your computer, or simply drag and drop them here.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-icon"><i class="fas fa-ruler-combined"></i></div>
+                        <h3>2. Set Resize Options</h3>
+                        <p>Choose to resize by percentage or exact dimensions. Set your desired width, height, and output format.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-icon"><i class="fas fa-magic"></i></div>
+                        <h3>3. Resize Images</h3>
+                        <p>Once your images are uploaded and options are set, click the "Resize Images" button to start the process.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-icon"><i class="fas fa-download"></i></div>
+                        <h3>4. Download Result</h3>
+                        <p>After resizing is complete, a download button will appear. Click it to save your new resized images.</p>
+                    </div>
+                </div>
+            </div>
+      </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="copyright">
+                <p>&copy; 2025 ToolHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.getElementById('upload-area');
+            const imageInput = document.getElementById('image-input');
+            const previewList = document.getElementById('preview-list');
+            const optionsPanel = document.getElementById('options-panel');
+            const resizeBtn = document.getElementById('resize-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const statusMessage = document.getElementById('status-message');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const outputArea = document.getElementById('output-area');
+
+            const resizeType = document.getElementById('resize-type');
+            const percentageOptions = document.getElementById('percentage-options');
+            const dimensionOptions = document.getElementById('dimension-options');
+            const resizePercentage = document.getElementById('resize-percentage');
+            const resizeWidth = document.getElementById('resize-width');
+            const resizeHeight = document.getElementById('resize-height');
+            const maintainAspectRatio = document.getElementById('maintain-aspect-ratio');
+            const outputFormat = document.getElementById('output-format');
+            const jpegQualityOption = document.getElementById('jpeg-quality-option');
+            const jpegQuality = document.getElementById('jpeg-quality');
+            const jpegQualityValue = document.getElementById('jpeg-quality-value');
+
+            let selectedImages = [];
+            let originalImageDimensions = new Map(); // Store original dimensions: Map<File, {width, height}>
+
+            function resetUI() {
+                selectedImages = [];
+                originalImageDimensions.clear();
+                imageInput.value = ''; 
+                previewList.innerHTML = '';
+                document.getElementById('preview-area').style.display = 'none';
+                optionsPanel.style.display = 'none';
+                
+                resizeBtn.disabled = true;
+                resizeBtn.style.display = 'inline-flex';
+
+                clearBtn.style.display = 'none';
+                
+                outputArea.style.display = 'none';
+                downloadBtn.removeAttribute('href');
+                
+                statusMessage.style.display = 'none';
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                uploadArea.style.pointerEvents = 'auto';
+
+                // Reset options
+                resizeType.value = 'percentage';
+                percentageOptions.style.display = 'flex';
+                dimensionOptions.style.display = 'none';
+                resizePercentage.value = 50;
+                resizeWidth.value = '';
+                resizeHeight.value = '';
+                maintainAspectRatio.checked = true;
+                outputFormat.value = 'original';
+                jpegQualityOption.style.display = 'none';
+                jpegQuality.value = 90;
+                jpegQualityValue.textContent = 90;
+            }
+            
+            function updateProgress(value) {
+                progressBar.style.width = `${value}%`;
+            }
+            
+            function showStatus(message, type = 'info') {
+                statusMessage.textContent = message;
+                statusMessage.className = `status-info`;
+                if (type === 'success') statusMessage.className = `status-success`;
+                if (type === 'error') statusMessage.className = `status-error`;
+                statusMessage.style.display = 'block';
+            }
+
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
+            clearBtn.addEventListener('click', resetUI);
+            
+            resizeType.addEventListener('change', () => {
+                if (resizeType.value === 'percentage') {
+                    percentageOptions.style.display = 'flex';
+                    dimensionOptions.style.display = 'none';
+                } else {
+                    percentageOptions.style.display = 'none';
+                    dimensionOptions.style.display = 'flex';
+                }
+            });
+
+            outputFormat.addEventListener('change', () => {
+                if (outputFormat.value === 'jpeg') {
+                    jpegQualityOption.style.display = 'flex';
+                } else {
+                    jpegQualityOption.style.display = 'none';
+                }
+            });
+
+            jpegQuality.addEventListener('input', (e) => {
+                jpegQualityValue.textContent = e.target.value;
+            });
+
+            function handleFiles(files) {
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        selectedImages.push(file);
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                originalImageDimensions.set(file, { width: img.width, height: img.height });
+                                updatePreviews();
+                            };
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            function updatePreviews() {
+                previewList.innerHTML = ''; 
+                if (selectedImages.length > 0) {
+                    document.getElementById('preview-area').style.display = 'block';
+                    optionsPanel.style.display = 'flex';
+                    resizeBtn.disabled = false;
+                    clearBtn.style.display = 'inline-flex';
+                    outputArea.style.display = 'none';
+                    uploadArea.style.pointerEvents = 'none';
+
+                    selectedImages.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const item = document.createElement('li');
+                            item.className = 'preview-item';
+                            item.innerHTML = `
+                                <div class="preview-item-info">
+                                    <div class="file-info">
+                                        <img src="${e.target.result}" alt="${file.name}" class="image-thumbnail">
+                                        <span class="file-name">${file.name}</span>
+                                    </div>
+                                    <button class="remove-btn" title="Remove image">&times;</button>
+                                </div>
+                            `;
+                            item.querySelector('.remove-btn').addEventListener('click', (event) => {
+                                event.stopPropagation();
+                                selectedImages.splice(index, 1);
+                                originalImageDimensions.delete(file);
+                                updatePreviews();
+                            });
+                            previewList.appendChild(item);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                } else {
+                    resetUI();
+                }
+            }
+
+            resizeBtn.addEventListener('click', async () => {
+                if (selectedImages.length === 0) return;
+
+                showStatus('Starting image resizing...', 'info');
+                progressContainer.style.display = 'block';
+                updateProgress(0);
+                
+                resizeBtn.disabled = true;
+                clearBtn.disabled = true;
+
+                try {
+                    const zip = new JSZip();
+                    
+                    for (let i = 0; i < selectedImages.length; i++) {
+                        const file = selectedImages[i];
+                        showStatus(`Processing image ${i + 1} of ${selectedImages.length}: ${file.name}...`, 'info');
+                        
+                        const img = new Image();
+                        const reader = new FileReader();
+                        
+                        // Use a promise to wait for the image to load
+                        await new Promise((resolve) => {
+                            reader.onload = (e) => {
+                                img.onload = resolve;
+                                img.src = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                        });
+
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        let targetWidth = img.width;
+                        let targetHeight = img.height;
+                        const originalDims = originalImageDimensions.get(file);
+
+                        if (resizeType.value === 'percentage') {
+                            const percentage = parseFloat(resizePercentage.value) / 100;
+                            targetWidth = originalDims.width * percentage;
+                            targetHeight = originalDims.height * percentage;
+                        } else { // dimensions
+                            const desiredWidth = parseInt(resizeWidth.value);
+                            const desiredHeight = parseInt(resizeHeight.value);
+
+                            if (maintainAspectRatio.checked) {
+                                if (desiredWidth && !desiredHeight) {
+                                    targetWidth = desiredWidth;
+                                    targetHeight = (originalDims.height / originalDims.width) * targetWidth;
+                                } else if (!desiredWidth && desiredHeight) {
+                                    targetHeight = desiredHeight;
+                                    targetWidth = (originalDims.width / originalDims.height) * targetHeight;
+                                } else if (desiredWidth && desiredHeight) {
+                                    const aspectRatio = originalDims.width / originalDims.height;
+                                    const targetAspectRatio = desiredWidth / desiredHeight;
+
+                                    if (aspectRatio > targetAspectRatio) { // Image is wider than target
+                                        targetWidth = desiredWidth;
+                                        targetHeight = desiredWidth / aspectRatio;
+                                    } else { // Image is taller than target
+                                        targetHeight = desiredHeight;
+                                        targetWidth = desiredHeight * aspectRatio;
+                                    }
+                                }
+                            } else { // Do not maintain aspect ratio
+                                if (desiredWidth) targetWidth = desiredWidth;
+                                if (desiredHeight) targetHeight = desiredHeight;
+                            }
+                        }
+
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
+                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        let outputFileName = file.name;
+                        let outputMimeType = file.type;
+                        let outputQuality = parseFloat(jpegQuality.value) / 100;
+
+                        if (outputFormat.value !== 'original') {
+                            outputMimeType = `image/${outputFormat.value}`;
+                            const nameParts = file.name.split('.');
+                            nameParts.pop(); // Remove original extension
+                            outputFileName = `${nameParts.join('.')}.${outputFormat.value}`;
+                        }
+
+                        const resizedBlob = await new Promise(resolve => {
+                            canvas.toBlob(resolve, outputMimeType, outputMimeType === 'image/jpeg' ? outputQuality : 1);
+                        });
+
+                        zip.file(outputFileName, resizedBlob);
+
+                        updateProgress(((i + 1) / selectedImages.length) * 100);
+                    }
+
+                    showStatus('Creating downloadable archive...', 'info');
+                    const zipFile = await zip.generateAsync({ type: "blob" });
+                    
+                    const blobUrl = URL.createObjectURL(zipFile);
+                    downloadBtn.href = blobUrl;
+                    outputArea.style.display = 'block';
+                    resizeBtn.style.display = 'none';
+                    clearBtn.disabled = false;
+                    showStatus('Your images are ready for download!', 'success');
+
+                } catch (error) {
+                    showStatus('An error occurred during image resizing. Please try again.', 'error');
+                    console.error(error);
+                    resizeBtn.disabled = false;
+                    clearBtn.disabled = false;
+                }
+            });
+
+            // Initial UI setup
+            resetUI();
+            resizeType.dispatchEvent(new Event('change'));
+            outputFormat.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>
